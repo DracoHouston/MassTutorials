@@ -18,7 +18,6 @@ public class MassTutorials : ModuleRules
 			"MassEntity",
 			"MassActors",
 			"MassCommon",
-			"MassSignals",
 			"MassSpawner",
 			"StructUtils",
 		});
