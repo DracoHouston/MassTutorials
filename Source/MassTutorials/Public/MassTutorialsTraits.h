@@ -7,7 +7,7 @@
 #include "MassTutorialsTraits.generated.h"
 
 UCLASS()
-class MASSTUTORIALS_API UMassTutorialsFarterTrait : public UMassEntityTraitBase
+class MASSTUTORIALS_API UMassTutorialsTaunterTrait : public UMassEntityTraitBase
 {
 	GENERATED_BODY()
 
@@ -18,5 +18,11 @@ protected:
 		UWorld& World) const override;
 
 	UPROPERTY(EditAnywhere, Category = Mass)
-		USoundBase* SoundToUse;
+		USoundBase* FarterTauntSound;
+
+	UPROPERTY(EditAnywhere, Category = Mass)
+		USoundBase* YawnerTauntSound;
+
+	UPROPERTY(EditAnywhere, Category = Mass)
+		bool StartMature;
 };

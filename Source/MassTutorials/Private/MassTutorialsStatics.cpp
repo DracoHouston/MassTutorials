@@ -3,86 +3,186 @@
 #include "MassTutorialsStatics.h"
 #include "MassAgentComponent.h"
 
-TArray<FMassTutorialsSoundWrapperFragment> UMassTutorialsStatics::GetSoundWrapperFragmentsFromEntities(UObject* ContextObject, const TArray<FEntityHandleWrapper>& Entities)
+TArray<FMassTutorialsSoundWrapperFragment> 
+UMassTutorialsStatics::GetSoundWrapperFragmentsFromEntities(
+	UObject* ContextObject, 
+	const TArray<FEntityHandleWrapper>& Entities)
 {
-	TArray<FMassTutorialsSoundWrapperFragment> results;
-	if (ContextObject == nullptr)
-	{
-		return results;
-	}
-	UMassEntitySubsystem* entitysubsystem = ContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	UMassEntitySubsystem* entitysubsystem = 
+		UMassTutorialsStatics::GetMassEntitySubsystem(ContextObject);
 	if (entitysubsystem == nullptr)
 	{
-		return results;
+		return TArray<FMassTutorialsSoundWrapperFragment>();
 	}
-	for (int32 i = 0; i < Entities.Num(); ++i)
-	{
-		results.Add(entitysubsystem->GetFragmentDataChecked<FMassTutorialsSoundWrapperFragment>(Entities[i].EntityHandle));
-	}
-	return results;
+	return UMassTutorialsStatics::
+		GetFragmentsFromEntities<FMassTutorialsSoundWrapperFragment>(
+			entitysubsystem, Entities); 
 }
 
-FMassTutorialsSoundWrapperFragment UMassTutorialsStatics::GetSoundWrapperFragmentFromEntity(UObject* ContextObject, const FEntityHandleWrapper& Entity)
+FMassTutorialsSoundWrapperFragment 
+UMassTutorialsStatics::GetSoundWrapperFragmentFromEntity(
+	UObject* ContextObject, 
+	const FEntityHandleWrapper& Entity)
 {
-	if (ContextObject == nullptr)
-	{
-		return FMassTutorialsSoundWrapperFragment();
-	}
-	UMassEntitySubsystem* entitysubsystem = ContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	UMassEntitySubsystem* entitysubsystem = 
+		UMassTutorialsStatics::GetMassEntitySubsystem(ContextObject);
 	if (entitysubsystem == nullptr)
 	{
 		return FMassTutorialsSoundWrapperFragment();
 	}
-	return entitysubsystem->GetFragmentDataChecked <FMassTutorialsSoundWrapperFragment>(Entity.EntityHandle);
+	return UMassTutorialsStatics::
+		GetFragmentFromEntity<FMassTutorialsSoundWrapperFragment>(
+			entitysubsystem, Entity); 
 }
 
-void UMassTutorialsStatics::SetSoundWrapperFragmentsForEntities(UObject* ContextObject, const TArray<FEntityHandleWrapper>& Entities, const TArray<FMassTutorialsSoundWrapperFragment>& Fragments)
+void UMassTutorialsStatics::SetSoundWrapperFragmentsForEntities(
+	UObject* ContextObject, 
+	const TArray<FEntityHandleWrapper>& Entities, 
+	const TArray<FMassTutorialsSoundWrapperFragment>& Fragments)
 {
-	if ((Entities.Num() != Fragments.Num()) || (ContextObject == nullptr))
+	UMassEntitySubsystem* entitysubsystem = 
+		UMassTutorialsStatics::GetMassEntitySubsystem(ContextObject);
+	if ((Entities.Num() != Fragments.Num()) || 
+		(entitysubsystem == nullptr))
 	{
 		return;
 	}
-	UMassEntitySubsystem* entitysubsystem = ContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
+	return UMassTutorialsStatics::
+		SetFragmentsForEntities<FMassTutorialsSoundWrapperFragment>(
+			entitysubsystem, Entities, Fragments);
+}
 
+void UMassTutorialsStatics::SetSoundWrapperFragmentForEntity(
+	UObject* ContextObject, 
+	const FEntityHandleWrapper& Entity, 
+	const FMassTutorialsSoundWrapperFragment& Fragment)
+{
+	UMassEntitySubsystem* entitysubsystem = 
+		UMassTutorialsStatics::GetMassEntitySubsystem(ContextObject);
 	if (entitysubsystem == nullptr)
 	{
 		return;
 	}
-	TMap<FMassArchetypeHandle, FMassTutorialsHandleAndFragmentArray> archetypemap;
-	for (int32 i = 0; i < Entities.Num(); ++i)
-	{
-		FMassTutorialsHandleAndFragmentArray& handleandfragmentarray = archetypemap.FindOrAdd(entitysubsystem->GetArchetypeForEntity(Entities[i].EntityHandle));
-		handleandfragmentarray.Handles.Add(Entities[i].EntityHandle);
-		handleandfragmentarray.Fragments.Add(FInstancedStruct::Make<FMassTutorialsSoundWrapperFragment>(Fragments[i]));
-	}
-	for (auto It = archetypemap.CreateIterator(); It; ++It)
-	{
-		FMassArchetypeSubChunks subchunks = FMassArchetypeSubChunks(It->Key, It->Value.Handles, FMassArchetypeSubChunks::EDuplicatesHandling::NoDuplicates);
-		entitysubsystem->BatchSetEntityFragmentsValues(
-			subchunks,
-			It->Value.Fragments);
-	}
+	UMassTutorialsStatics::
+		SetFragmentForEntity<FMassTutorialsSoundWrapperFragment>(
+			entitysubsystem, Entity, Fragment);
 }
 
-void UMassTutorialsStatics::SetSoundWrapperFragmentForEntity(UObject* ContextObject, const FEntityHandleWrapper& Entity, const FMassTutorialsSoundWrapperFragment& Fragment)
-{
-	if (ContextObject == nullptr)
-	{
-		return;
-	}
-	UMassEntitySubsystem* entitysubsystem = ContextObject->GetWorld()->GetSubsystem<UMassEntitySubsystem>();
-	if (entitysubsystem == nullptr)
-	{
-		return;
-	}
-	TArray<FInstancedStruct> structarray;
-	structarray.Add(FInstancedStruct::Make<FMassTutorialsSoundWrapperFragment>(Fragment));
-	entitysubsystem->SetEntityFragmentsValues(Entity.EntityHandle, structarray);
-}
-
-FEntityHandleWrapper UMassTutorialsStatics::GetEntityHandleFromMassAgentComponent(UMassAgentComponent* AgentComponent)
+FEntityHandleWrapper 
+UMassTutorialsStatics::GetEntityHandleFromMassAgentComponent(
+	UMassAgentComponent* AgentComponent)
 {
 	FEntityHandleWrapper result;
 	result.EntityHandle = AgentComponent->GetEntityHandle();
 	return result;
+}
+
+void UMassTutorialsStatics::RaiseSignalOnEntity(const FEntityHandleWrapper& Entity)
+{
+}
+
+void UMassTutorialsStatics::RaiseSignalOnEntities(const TArray<FEntityHandleWrapper>& Entity)
+{
+}
+
+TArray<FMassTutorialsDefaultTauntSoundsFragment> UMassTutorialsStatics::GetDefaultTauntSoundsFragmentFromEntities(UObject* ContextObject, const TArray<FEntityHandleWrapper>& Entities)
+{
+	UMassEntitySubsystem* entitysubsystem =
+		UMassTutorialsStatics::GetMassEntitySubsystem(ContextObject);
+	if (entitysubsystem == nullptr)
+	{
+		return TArray<FMassTutorialsDefaultTauntSoundsFragment>();
+	}
+	return UMassTutorialsStatics::GetFragmentsFromEntities<FMassTutorialsDefaultTauntSoundsFragment>(
+		entitysubsystem, 
+		Entities);
+}
+
+FMassTutorialsDefaultTauntSoundsFragment UMassTutorialsStatics::GetDefaultTauntSoundsFragmentFromEntity(UObject* ContextObject, const FEntityHandleWrapper& Entity)
+{
+	UMassEntitySubsystem* entitysubsystem =
+		UMassTutorialsStatics::GetMassEntitySubsystem(ContextObject);
+	if (entitysubsystem == nullptr)
+	{
+		return FMassTutorialsDefaultTauntSoundsFragment();
+	}
+	return UMassTutorialsStatics::GetSharedFragmentFromEntity<FMassTutorialsDefaultTauntSoundsFragment>(
+		entitysubsystem,
+		Entity);
+}
+
+void UMassTutorialsStatics::SetDefaultTauntSoundsFragmentsForEntities(UObject* ContextObject, const TArray<FEntityHandleWrapper>& Entities, const TArray<FMassTutorialsDefaultTauntSoundsFragment>& Fragments)
+{
+	UMassEntitySubsystem* entitysubsystem =
+		UMassTutorialsStatics::GetMassEntitySubsystem(ContextObject);
+	if (entitysubsystem == nullptr)
+	{
+		return;
+	}
+	UMassTutorialsStatics::
+		SetFragmentsForEntities<FMassTutorialsDefaultTauntSoundsFragment>(
+			entitysubsystem, Entities, Fragments);
+}
+
+void UMassTutorialsStatics::SetDefaultTauntSoundsFragmentForEntity(UObject* ContextObject, const FEntityHandleWrapper& Entity, const FMassTutorialsDefaultTauntSoundsFragment& Fragment)
+{
+	UMassEntitySubsystem* entitysubsystem =
+		UMassTutorialsStatics::GetMassEntitySubsystem(ContextObject);
+	if (entitysubsystem == nullptr)
+	{
+		return;
+	}
+	UMassTutorialsStatics::
+		SetSharedFragmentForEntity<FMassTutorialsDefaultTauntSoundsFragment>(
+			entitysubsystem, Entity, Fragment);
+}
+
+bool UMassTutorialsStatics::GetEntityHasMatureTag(UObject* ContextObject, const FEntityHandleWrapper& Entity)
+{
+	UMassEntitySubsystem* entitysubsystem =
+		UMassTutorialsStatics::GetMassEntitySubsystem(ContextObject);
+	if (entitysubsystem == nullptr)
+	{
+		return false;
+	}
+	return UMassTutorialsStatics::GetEntityHasTag<FMassTutorialsMatureTag>(entitysubsystem, Entity);
+}
+
+TArray<bool> UMassTutorialsStatics::GetEntitiesHaveMatureTag(UObject* ContextObject, const TArray<FEntityHandleWrapper>& Entities)
+{
+	UMassEntitySubsystem* entitysubsystem =
+		UMassTutorialsStatics::GetMassEntitySubsystem(ContextObject);
+	if (entitysubsystem == nullptr)
+	{
+		return TArray<bool>();
+	}
+	return UMassTutorialsStatics::GetEntitiesHaveTag<FMassTutorialsMatureTag>(entitysubsystem, Entities);
+}
+
+void UMassTutorialsStatics::SetEntityHasMatureTag(UObject* ContextObject, const FEntityHandleWrapper& Entity, bool NewHasTag)
+{
+	UMassEntitySubsystem* entitysubsystem =
+		UMassTutorialsStatics::GetMassEntitySubsystem(ContextObject);
+	if (entitysubsystem == nullptr)
+	{
+		return;
+	}
+	UMassTutorialsStatics::SetEntityHasTag<FMassTutorialsMatureTag>(
+		entitysubsystem, 
+		Entity, 
+		NewHasTag);
+}
+
+void UMassTutorialsStatics::SetEntitiesHaveMatureTag(UObject* ContextObject, const TArray<FEntityHandleWrapper>& Entities, TArray<bool> NewHaveTags)
+{
+	UMassEntitySubsystem* entitysubsystem =
+		UMassTutorialsStatics::GetMassEntitySubsystem(ContextObject);
+	if (entitysubsystem == nullptr)
+	{
+		return;
+	}
+	UMassTutorialsStatics::SetEntitiesHaveTag<FMassTutorialsMatureTag>(
+		entitysubsystem, 
+		Entities, 
+		NewHaveTags);
 }
