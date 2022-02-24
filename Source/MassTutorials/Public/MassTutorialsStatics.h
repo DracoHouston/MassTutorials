@@ -55,33 +55,26 @@ class MASSTUTORIALS_API UMassTutorialsStatics : public UBlueprintFunctionLibrary
   
   UFUNCTION(BlueprintCallable)
 		static void RaiseSignalOnEntity(
-			const FEntityHandleWrapper& Entity);
+			UObject* ContextObject,
+			const FEntityHandleWrapper& Entity,
+			FName SignalName);
 
 	UFUNCTION(BlueprintCallable)
 		static void RaiseSignalOnEntities(
-			const TArray<FEntityHandleWrapper>& Entity);
+			UObject* ContextObject,
+			const TArray<FEntityHandleWrapper>& Entities,
+			FName SignalName);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	static TArray<FMassTutorialsDefaultTauntSoundsFragment> GetDefaultTauntSoundsFragmentFromEntities(
-		UObject* ContextObject,
-		const TArray<FEntityHandleWrapper>& Entities);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	static FMassTutorialsDefaultTauntSoundsFragment GetDefaultTauntSoundsFragmentFromEntity(
+	static FMassTutorialsTauntSoundsFragment GetDefaultTauntSoundsFragmentFromEntity(
 		UObject* ContextObject,
 		const FEntityHandleWrapper& Entity);
-
-	UFUNCTION(BlueprintCallable)
-	static void SetDefaultTauntSoundsFragmentsForEntities(
-		UObject* ContextObject,
-		const TArray<FEntityHandleWrapper>& Entities,
-		const TArray<FMassTutorialsDefaultTauntSoundsFragment>& Fragments);
 
 	UFUNCTION(BlueprintCallable)
 	static void SetDefaultTauntSoundsFragmentForEntity(
 		UObject* ContextObject,
 		const FEntityHandleWrapper& Entity,
-		const FMassTutorialsDefaultTauntSoundsFragment& Fragment);
+		const FMassTutorialsTauntSoundsFragment& Fragment);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static bool GetEntityHasMatureTag(
@@ -222,86 +215,152 @@ class MASSTUTORIALS_API UMassTutorialsStatics : public UBlueprintFunctionLibrary
 
 	template <typename T>
 	static T GetSharedFragmentFromEntity(
-		UMassEntitySubsystem* EntitySubsystem,
+		UObject* ContextObject,
 		const FEntityHandleWrapper& Entity)
 	{
-		FMassEntityView view(*EntitySubsystem, Entity.EntityHandle);
+		if (ContextObject == nullptr)
+		{
+			return T();
+		}
+		UMassEntitySubsystem* entitysubsystem =
+			ContextObject->GetWorld()
+			->GetSubsystem<UMassEntitySubsystem>();
+		if (entitysubsystem == nullptr)
+		{
+			return T();
+		}
+		FMassEntityView view(*entitysubsystem, Entity.EntityHandle);
 		T& sharedfragment = view.GetSharedFragmentData<T>();
 		return T(sharedfragment);
 	}
 
 	template <typename T>
 	static void SetSharedFragmentForEntity(
-		UMassEntitySubsystem* EntitySubsystem,
+		UObject* ContextObject,
 		const FEntityHandleWrapper& Entity,
 		const T& Fragment)
 	{
-		FMassEntityView view(*EntitySubsystem, Entity.EntityHandle);
+		if (ContextObject == nullptr)
+		{
+			return;
+		}
+		UMassEntitySubsystem* entitysubsystem =
+			ContextObject->GetWorld()
+			->GetSubsystem<UMassEntitySubsystem>();
+		if (entitysubsystem == nullptr)
+		{
+			return;
+		}
+		FMassEntityView view(*entitysubsystem, Entity.EntityHandle);
 		UScriptStruct* scriptstruct = T::StaticStruct();
 		T& oldfragment = view.GetSharedFragmentData<T>();
 		if (scriptstruct->CompareScriptStruct(&Fragment, &oldfragment, 0))
 		{
 			return;
 		}
-		oldfragment = Fragment;
+		scriptstruct->CopyScriptStruct(&oldfragment, &Fragment);
+		//oldfragment = Fragment;
 	}
 
 	template <typename T>
 	static TArray<bool> GetEntitiesHaveTag(
-		UMassEntitySubsystem* EntitySubsystem,
+		UObject* ContextObject,
 		const TArray<FEntityHandleWrapper>& Entities)
 	{
 		TArray<bool> results;
-
+		if (ContextObject == nullptr)
+		{
+			return results;
+		}
+		UMassEntitySubsystem* entitysubsystem =
+			ContextObject->GetWorld()
+			->GetSubsystem<UMassEntitySubsystem>();
+		if (entitysubsystem == nullptr)
+		{
+			return results;
+		}
 		for (int32 i = 0; i < Entities.Num(); ++i)
 		{
-			FMassEntityView View(*EntitySubsystem, Entities[i].EntityHandle);
-			results.Add(View.HasTag<T>());
+			FMassEntityView view(*entitysubsystem, Entities[i].EntityHandle);
+			results.Add(view.HasTag<T>());
 		}
 		return results;
 	}
 
 	template <typename T>
 	static bool GetEntityHasTag(
-		UMassEntitySubsystem* EntitySubsystem,
+		UObject* ContextObject,
 		const FEntityHandleWrapper& Entity)
 	{
-		FMassEntityView View(*EntitySubsystem, Entity.EntityHandle);
-		return View.HasTag<T>();
+		if (ContextObject == nullptr)
+		{
+			return false;
+		}
+		UMassEntitySubsystem* entitysubsystem =
+			ContextObject->GetWorld()
+			->GetSubsystem<UMassEntitySubsystem>();
+		if (entitysubsystem == nullptr)
+		{
+			return false;
+		}
+		FMassEntityView view(*entitysubsystem, Entity.EntityHandle);
+		return view.HasTag<T>();
 	}
 
 	template <typename T>
 	static void SetEntitiesHaveTag(
-		UMassEntitySubsystem* EntitySubsystem,
+		UObject* ContextObject,
 		const TArray<FEntityHandleWrapper>& Entities,
 		TArray<bool> NewHaveTags)
 	{
+		if (ContextObject == nullptr)
+		{
+			return;
+		}
+		UMassEntitySubsystem* entitysubsystem =
+			ContextObject->GetWorld()
+			->GetSubsystem<UMassEntitySubsystem>();
+		if (entitysubsystem == nullptr)
+		{
+			return;
+		}
 		for (int32 i = 0; i < Entities.Num(); ++i)
 		{
 			if (NewHaveTags[i])
 			{
-				EntitySubsystem->AddTagToEntity(Entities[i].EntityHandle, T::StaticStruct());
+				entitysubsystem->AddTagToEntity(Entities[i].EntityHandle, T::StaticStruct());
 			}
 			else
 			{
-				EntitySubsystem->RemoveTagFromEntity(Entities[i].EntityHandle, T::StaticStruct());
+				entitysubsystem->RemoveTagFromEntity(Entities[i].EntityHandle, T::StaticStruct());
 			}
 		}
 	}
 
 	template <typename T>
 	static void SetEntityHasTag(
-		UMassEntitySubsystem* EntitySubsystem,
+		UObject* ContextObject,
 		const FEntityHandleWrapper& Entity,
 		bool NewHasTag)
 	{
+		if (ContextObject == nullptr)
+		{
+			return;
+		}
+		UMassEntitySubsystem* entitysubsystem =
+			ContextObject->GetWorld()
+			->GetSubsystem<UMassEntitySubsystem>();
+		if (entitysubsystem == nullptr)
+		{
+			return;
+		}
 		if (NewHasTag)
 		{
-			EntitySubsystem->AddTagToEntity(Entity.EntityHandle, T::StaticStruct());
+			entitysubsystem->AddTagToEntity(Entity.EntityHandle, T::StaticStruct());
 		}
 		else
 		{
-			EntitySubsystem->RemoveTagFromEntity(Entity.EntityHandle, T::StaticStruct());
+			entitysubsystem->RemoveTagFromEntity(Entity.EntityHandle, T::StaticStruct());
 		}
 	}
 };

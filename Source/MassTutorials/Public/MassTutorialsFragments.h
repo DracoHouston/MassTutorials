@@ -20,18 +20,6 @@ struct MASSTUTORIALS_API FMassTutorialsSoundWrapperFragment : public FMassFragme
 };
 
 /**
-* Chunk fragment storing the current taunt sound for entities on this chunk.
-*/
-USTRUCT(BlueprintType)
-struct MASSTUTORIALS_API FMassTutorialsTauntSoundFragment : public FMassChunkFragment
-{
-	GENERATED_BODY()
-
-		UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		TWeakObjectPtr<USoundBase> TauntSound;
-};
-
-/**
 * Tag indicating the player is very mature.
 */
 USTRUCT(BlueprintType)
@@ -44,7 +32,7 @@ struct MASSTUTORIALS_API FMassTutorialsMatureTag : public FMassTag
 * Shared fragment storing default taunt sounds for Farters and Yawners
 */
 USTRUCT(BlueprintType)
-struct MASSTUTORIALS_API FMassTutorialsDefaultTauntSoundsFragment : public FMassSharedFragment
+struct MASSTUTORIALS_API FMassTutorialsTauntSoundsFragment : public FMassSharedFragment
 {
 	GENERATED_BODY()
 
